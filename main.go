@@ -101,6 +101,62 @@ func NewEventEndPoint(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	bookingClient.Init("127.0.0.1:27017", "test")
+
+	bookingClient.RemoveDB() //Remove the database if exists
+
+	//Define the payments type
+	paypal, _ := bookingClient.AddPaymentType("PayPal")
+	mastercard, _ := bookingClient.AddPaymentType("Mastercard")
+	american, _ := bookingClient.AddPaymentType("American Express")
+
+	fmt.Println("... ... PAYMENTS ... ... ")
+	fmt.Println(paypal.Name)
+	fmt.Println(mastercard.Name)
+	fmt.Println(american.Name)
+
+	// //Generate a Base commision
+
+	defaultComission, _ := bookingClient.AddCommission("Default", 5, false, true) // Comission with value
+	midComission, _ := bookingClient.AddCommission("Medium", 2, true, true)       //Comission with percent
+	premiumComission, _ := bookingClient.AddCommission("Premium", 4, false, true) //Comission with percent
+
+	fmt.Println("... ... CLIENTS ... ... ")
+	fmt.Println(defaultComission.Name)
+	fmt.Println(midComission.Name)
+	fmt.Println(premiumComission.Name)
+
+	// //Create a client with default comission
+	defaultComission, _ = bookingClient.GetDefaultComission()
+	client, _ := bookingClient.AddClient("Client 1", "client1", "pass", defaultComission)
+
+	fmt.Println(client.Name)
+
+	//Create a custom comission based on defaultComission
+	customComission := defaultComission
+	customComission.IsDefault = false
+	customComission.Value = 2
+	customComission.Name = "Custom lollapalooza"
+
+	// Add the new event with default commission
+	coronaCapital, _ := bookingClient.AddEvent("Corona Capital", client.Id, midComission)
+	viveLatino, _ := bookingClient.AddEvent("Vive Latino", client.Id, premiumComission)
+	lollapalooza, _ := bookingClient.AddEvent("lollapalooza", client.Id, customComission)
+
+	fmt.Println("... ... COMISSIONS ... ... ")
+	fmt.Println(coronaCapital.Name)
+	fmt.Println(viveLatino.Name)
+	fmt.Println(lollapalooza.Name)
+
+	//Calculate bookingClient cost.
+
+	result, _ := bookingClient.CalculateCost(coronaCapital, mastercard, 1, 500)
+
+	fmt.Println("... ... RESULT ... ... ")
+	fmt.Println(fmt.Sprintf("Quantity: %d", result.Quantity))
+	fmt.Println(fmt.Sprintf("Subtotal: %.2f", result.Subtotal))
+	fmt.Println(fmt.Sprintf("Comission: %.2f", result.TotalComission))
+	fmt.Println(fmt.Sprintf("Total: %.2f", result.Cost))
+
 	//bookingClient.RemoveDB() //Remove the database if exists
 
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Accept", "Origin", "Authorization"})
